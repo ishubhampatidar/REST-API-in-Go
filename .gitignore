@@ -27,3 +27,4 @@ go.work.sum
 # other files and folder to ignor
 info.txt
 storage
+/config
