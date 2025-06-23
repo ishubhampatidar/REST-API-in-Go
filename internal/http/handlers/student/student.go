@@ -138,3 +138,30 @@ func Update(storage storage.Storage) http.HandlerFunc {
 func containsIgnoreCase(s, substr string) bool {
 	return strings.Contains(strings.ToLower(s), strings.ToLower(substr))
 }
+
+func Delete(storage storage.Storage) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id := r.PathValue("id")
+		slog.Info("deletingthe student", slog.String("id", id))
+
+		intId, err := strconv.ParseInt(id, 10, 64)
+		if err != nil {
+			response.WriteJson(w, http.StatusBadRequest, response.GeneralErro(err))
+			return
+		}
+
+		err = storage.DeleteStudent(intId)
+		if err != nil {
+			// check for "no student found" error and return 404
+			if len(err.Error()) > 0 && containsIgnoreCase(err.Error(), "no student found") {
+				response.WriteJson(w, http.StatusNotFound, response.GeneralErro(err))
+				return
+			}
+			response.WriteJson(w, http.StatusInternalServerError, response.GeneralErro(err))
+			return
+		}
+
+		slog.Info("student deleted successfully", slog.String("userId", id))
+		response.WriteJson(w, http.StatusOK, map[string]string{"message": "student deleted successfully"})
+	}
+}
